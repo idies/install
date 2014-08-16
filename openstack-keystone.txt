@@ -1,0 +1,60 @@
+Install openstack from repo
+
+1. Add repo to yum:
+
+# cd /etc/yum.repos.d/
+# wget "https://repos.fedorapeople.org/repos/openstack/openstack-havana/epel-openstack-havana.repo"
+
+# cd ~
+# yum update
+
+# yum install openstack-keystone -y
+
+2. Create database
+
+http://docs.openstack.org/grizzly/openstack-compute/install/yum/content/install-keystone.html
+
+CREATE DATABASE keystone;
+
+GRANT ALL ON keystone.* TO 'keystone'@'%' IDENTIFIED BY 'password';
+GRANT ALL ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY 'password';
+
+3. Modify config to use MySQL:
+
+Generate a random admin key:
+
+# openssl rand -hex 10
+  d2e63a200f9dd4ba99e9
+
+edit /etc/keystone/keystone.conf
+  admin_token = d2e63a200f9dd4ba99e9
+  connection = mysql://keystone:password@localhost/keystone
+
+4. Create rc file for OpenStack authentication: /root/admin-openrc.sh
+
+export OS_USERNAME=admin
+export OS_PASSWORD=alma
+export OS_TENANT_NAME=admin
+export OS_AUTH_URL=http://127.0.0.1:35357/v2.0
+export OS_SERVICE_ENDPOINT=http://127.0.0.1:35357/v2.0
+export OS_SERVICE_TOKEN=d2e63a200f9dd4ba99e9
+export SERVICE_ENDPOINT=http://127.0.0.1:35357/v2.0
+export SERVICE_TOKEN=d2e63a200f9dd4ba99e9
+
+source /root/admin-openrc.sh
+
+5. Create database schema
+
+# keystone-manage db_sync
+
+check if created
+
+# mysql -u keystone -p
+> use keystone;
+> show tables;
+> quit;
+
+6. Start keystone service
+
+# chkconfig openstack-keystone on
+# service openstack-keystone start

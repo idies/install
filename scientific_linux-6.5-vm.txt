@@ -1,0 +1,68 @@
+scitest SL65 VM install
+====================
+
+1. Install SL65 with default options from ISO
+
+2. Install Hyper-V integration
+
+   Download from here: http://www.microsoft.com/en-us/download/details.aspx?id=34603
+
+# mount cdrom
+# cd .../RHEL63
+# install.sh
+
+   takes a while but installs just fine, after install, reboot
+   cdrom will disappear as LIS unloads ati drivers
+
+3. Configure network
+  
+   List all interfaces
+   
+# ifconfig -a
+
+   modify /etc/sysconfig/network-scripts/ifcfg-eth*
+   make sure to change MAC address
+
+4. Install a few tools
+
+# yum install nano -y
+# yum install curl -y
+# yum install screen -y
+# yum install wget -y
+# yum install git -y
+# yum groupinstall 'Development Tools'
+
+5. install MySQL
+
+# yum install mysql-server -y
+# chkconfig mysqld on
+# service mysqld start
+
+Test with
+
+# mysql
+> show databases;
+
+6. Install tomcat6
+
+# yum install tomcat6 -y
+# service tomcat6 start
+
+Should listen on 8080, make sure it does with (will return 400 but that's ok, it's running)
+
+# curl "http://localhost:8080" -v
+
+7. Install apache2
+
+# yum install httpd -y
+# service start httpd
+
+Test with
+
+# curl "http://localhost"
+
+** Links
+
+http://www.hyper-v-mart.com/Howto/Install_CentOS_5_VM_Step_by_Step.aspx
+http://www.linuxquestions.org/questions/linux-newbie-8/questions-regarding-centos-6-3-install-on-hyperv-remote-server-4175431528-print/
+http://www.microsoft.com/en-us/download/details.aspx?id=34603

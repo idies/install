@@ -1,0 +1,108 @@
+SciDrive installation
+
+# git clone https://github.com/idies/scidrive.git -b feature/keystone
+
+(should merge down to master and tag if works...)
+
+mysql> CREATE DATABASE scidrive;
+mysql> USE scidrive;
+mysql> SOURCE sql/vospace.sql;
+mysql> GRANT ALL ON scidrive.* TO 'scidrive'@'%' IDENTIFIED BY 'almafa';
+mysql> GRANT ALL ON scidrive.* TO 'scidrive'@'localhost' IDENTIFIED BY 'almafa';
+
+test with
+
+mysql> SHOW TABLES;
+
+
+Make changes to the scidrive/src/application.properties file
+	- change region
+	- mysql user and password
+	
+---> fishy
+Generate a pool of SWIFT users using the scidrive/sql/generate_swift_users.pl script
+	- before running, modify: database, user, pw, swift url
+<---
+
+Intalling:
+
+need to have apache ant and a newer java to build war file for tomcat
+
+# yum install ant java-1.7.0-openjdk java-1.7.0-openjdk-devel -y
+
+test versions:
+
+# java -version
+# javac -version
+
+to enable deployment with ant, you need to install tomcate manager
+http://www.unixmen.com/howto-install-tomcat-in-centos-fedora-the-easy-way/
+
+yum install tomcat6-webapps tomcat6-admin-webapps -y
+
+test with
+
+# curl "http://localhost:8080/manager"
+
+should return nothing (no error)
+
+To create a tomcat admin password edit /etc/tomcat6/tomcat-users.xml and add
+
+<role rolename="admin"/>
+<role rolename="manager"/>
+<user name="scidrive" password="almafa" roles="admin,manager" />
+
+# service tomcat6 restart
+
+modify build.properties, don't forget the port number of tomcat!
+
+then in the scidrive source root run ant to build stuff:
+(will download packages on first build, be patient)
+
+# ant
+
+Then deploy:
+
+# ant deploy
+
+It will be placed into /var/lib/tomcat6/webapps/
+
+Clone the ui from github and initialize (tons of) submodules
+
+# git clone https://github.com/idies/scidrive-ui.git -b feature_auth
+# cd scidrive-ui
+# git submodule update --init --recursive
+
+Fix bug in dojo
+
+# cd src/dojox/form/resources/
+# wget https://bugs.dojotoolkit.org/raw-attachment/ticket/16320/CheckedMultiSelect.css
+# rm CheckedMultiSelect.css
+# mv CheckedMultiSelect.css.1 CheckedMultiSelect.css
+
+Modify scidrive-ui/src/scidrive/resources/regions.json
+
+# ./build.sh
+
+It will create the directory dist with js files minified. Copy the whole stuff to the webserver:
+
+# cp -R dist /var/www/html/scidrive-ui
+
+Test:
+
+# curl "http://localhost/scidrive-ui/"
+
+To access web remotely:
+
+http://www.cyberciti.biz/faq/howto-rhel-linux-open-port-using-iptables/
+
+Edit
+
+Add to the _begining_ of list:
+
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 8080 -j ACCEPT
+
+Then restart iptables
+
+# service iptables restart

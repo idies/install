@@ -1,0 +1,301 @@
+1. Install RabbitMQ
+
+On the controller node, install the messaging queue server. Typically this is RabbitMQ but
+Qpid and ZeroMQ (0MQ) are also available.
+
+# yum install rabbitmq-server -y
+# chkconfig rabbitmq-server on
+# service rabbitmq-server start
+
+2. Create account for swift in Keystone
+
+# keystone tenant-create --name=service
+# keystone user-create --name=swift --pass=password
+# keystone role-create --name=admin
+# keystone user-role-add --user=swift --tenant=service --role=admin
+
+Create a service entry for the Object Storage Service:
+
+# keystone service-create --name=swift --type=object-store --description="Object Storage Service"
+
+this will return service id to be used below
+
+Create the endpoint. Port should be that of the proxy server (8081)
+
+# keystone endpoint-create --service=swift --publicurl='http://172.23.24.32:8081/v1/AUTH_%(tenant_id)s' --internalurl='http://172.23.24.32:8081/v1/AUTH_%(tenant_id)s' --adminurl=http://172.23.24.32:8081
+
+Test settings:
+
+# curl -s -d '{"auth": {"tenantName": "service", "passwordCredentials": {"username": "swift", "password": "password"}}}' -H 'Content-type: application/json' http://localhost:5000/v2.0/tokens
+
+******************
+it should list endpoints with correct urls
+
+
+Create the configuration directory on all nodes:
+
+# mkdir -p /etc/swift
+
+Create /etc/swift/swift.conf on all nodes:
+
+[swift-hash]
+# random unique string that can never change (DO NOT LOSE)
+swift_hash_path_suffix = fLIbertYgibbitZ
+
+Install Storage node packages:
+
+# apt-get install swift-account swift-container swift-object xfsprogs
+
+# yum install openstack-swift openstack-swift-account openstack-swift-container openstack-swift-object -y
+
+Configure disks for swift
+
+When installing on a VM, at this point three VHDs need to be added.
+
+# fdisk /dev/sdb
+
+commands to execute:
+n -- creates new partition
+p -- make it a primary partition
+  -- default partition number (1)
+  -- default first sector
+  -- default last sector
+p -- list partitions to see if it's created
+w -- write changes to disk and exit
+
+now there should be a new device /dev/sdb1
+
+to install xfs, you might need to:
+
+# yum install xfsprogs -y
+# modprobe xfs
+
+and then
+
+# mkfs.xfs /dev/sdb1
+# echo "/dev/sdb1 /srv/node/sdb1 xfs noatime,nodiratime,nobarrier,logbufs=8 0 0" >> /etc/fstab
+# mkdir -p /srv/node/sdb1
+# mount /srv/node/sdb1
+# chown -R swift:swift /srv/node
+
+repeat for all disks
+
+Now configure rsync for swift.
+
+Create /etc/rsyncd.conf:
+
+uid = swift
+gid = swift
+log file = /var/log/rsyncd.log
+pid file = /var/run/rsyncd.pid
+# the line below should be the public address of the node
+address = 127.0.0.1        
+[account]
+max connections = 2
+path = /srv/node/
+read only = false
+lock file = /var/lock/account.lock
+[container]
+max connections = 2
+path = /srv/node/
+read only = false
+lock file = /var/lock/container.lock
+[object]
+max connections = 2
+path = /srv/node/
+read only = false
+lock file = /var/lock/object.lock
+
+Edit the following line in /etc/default/rsync:
+RSYNC_ENABLE=true
+
+Start the rsync service:
+# service rsync start
+
+or on SL:
+
+# rsync --daemon
+
+This is something for swift again:
+
+Create the swift recon cache directory and set its permissions:
+# mkdir -p /var/swift/recon
+# chown -R swift:swift /var/swift/recon
+
+Now we have a single swift node but we still need a proxy above it
+
+Install swift-proxy service:
+# apt-get install swift-proxy memcached python-keystoneclient python-swiftclient python-webob
+
+# yum install openstack-swift-proxy memcached python-keystoneclient python-swiftclient python-webob -y
+
+Edit this line in the /etc/memcached.conf file, so memcache listens only on the local network. for dev machine, localhost is just fine
+-l 127.0.0.1
+
+Restart the memcached service:
+# service memcached restart
+
+Now comes the tricky part: configure swift proxy
+
+Create /etc/swift/proxy-server.conf:
+make sure to set keystone password
+
+The port specified is on which swift will listen to
+
+[DEFAULT]
+bind_port = 8081
+user = swift
+[pipeline:main]
+pipeline = healthcheck cache authtoken keystoneauth proxy-server
+[app:proxy-server]
+use = egg:swift#proxy
+allow_account_management = true
+account_autocreate = true
+[filter:keystoneauth]
+use = egg:swift#keystoneauth
+operator_roles = Member,admin,swiftoperator
+[filter:authtoken]
+paste.filter_factory = keystoneclient.middleware.auth_token:filter_factory
+# Delaying the auth decision is required to support token-less
+# usage for anonymous referrers ('.r:*').
+delay_auth_decision = true
+# cache directory for signing certificate
+signing_dir = /home/swift/keystone-signing
+# auth_* settings refer to the Keystone server
+auth_protocol = http
+auth_host = controller
+auth_port = 35357
+# the service tenant and swift username and password created in Keystone
+admin_tenant_name = service
+admin_user = swift
+admin_password = SWIFT_PASS
+[filter:cache]
+use = egg:swift#memcache
+[filter:catch_errors]
+use = egg:swift#catch_errors
+[filter:healthcheck]
+use = egg:swift#healthcheck
+
+Turns out swift-ring-bulder was missing, but a fix:
+# apt-get install swift
+
+Below 18 means some size limit (2^18), 2 means 2-way replication, 1 means 1 hour lower limit for replication of a partition twice
+
+# cd /etc/swift
+# swift-ring-builder account.builder create 10 3 1
+# swift-ring-builder container.builder create 10 3 1
+# swift-ring-builder object.builder create 10 3 1
+
+For every storage device on each node add entries to each ring:
+If you run everything on the same machine (e.g. dev machine), make sure port numbers differ.
+
+# swift-ring-builder account.builder add z1-127.0.0.1:6012/sdb1 100
+# swift-ring-builder account.builder add z1-127.0.0.1:6012/sdc1 100
+# swift-ring-builder account.builder add z1-127.0.0.1:6012/sdd1 100
+
+# swift-ring-builder container.builder add z1-127.0.0.1:6011/sdb1 100
+# swift-ring-builder container.builder add z1-127.0.0.1:6011/sdc1 100
+# swift-ring-builder container.builder add z1-127.0.0.1:6011/sdd1 100
+
+# swift-ring-builder object.builder add z1-127.0.0.1:6010/sdb1 100
+# swift-ring-builder object.builder add z1-127.0.0.1:6010/sdc1 100
+# swift-ring-builder object.builder add z1-127.0.0.1:6010/sdd1 100
+
+
+Verify the ring contents for each ring:
+# swift-ring-builder account.builder
+# swift-ring-builder container.builder
+# swift-ring-builder object.builder
+
+Rebalance the rings:
+# swift-ring-builder account.builder rebalance
+# swift-ring-builder container.builder rebalance
+# swift-ring-builder object.builder rebalance
+
+
+
+each one should print something like:
+Reassigned 262144 (100.00%) partitions. Balance is now 0.00.
+three .gz files are also created
+these need to be copied to all nodes under /etc/swift
+
+Make sure the swift user owns all configuration files:
+# chown -R swift:swift /etc/swift
+
+Create home folder for swift service
+# mkdir -p /home/swift
+# chown -R swift:swift /home/swift
+
+edit configs to listen on various ports
+
+/etc/swift/container-server.conf   6011
+/etc/swift/account-server.conf                  6012
+/etc/swift/object-server.conf      6010
+
+Start services on all nodes:
+
+# swift-init all start
+
+There should be a bunch of processes running now:
+ps ax | grep swift
+
+Restart the Proxy service:
+# service swift-proxy restart
+# chkconfig openstack-swift-proxy on
+# service openstack-swift-proxy start
+
+The services below should be turned on using chkconfig
+
+# for service in swift-object swift-object-replicator swift-object-updater swift-objectauditor swift-container swift-container-replicator swift-container-updater swiftcontainer-auditor swift-account swift-account-replicator swift-account-reaper swift-account-auditor;do service $service start; done
+
+To start all swift services at once, run the command:
+# swift-init all start
+
+
+Verify the installation
+
+Request a keystone token:
+
+curl -s -d '{"auth": {"tenantName": "service", "passwordCredentials": {"username": "swift", "password": "password"}}}' -H 'Content-type: application/json' http://localhost:5000/v2.0/tokens
+
+ Try to authenticate swift user via the proxy with the token id and auth url from the token:
+
+ curl -H "X-Auth-Token: f9e4e62194194890ba71bb4956cda5b3" "http://localhost:8080/v1/AUTH_a8cecc70f1704be2acde231d89e1a9a6"
+
+
+this call should return no error if successful
+
+ if all good, try swift:
+
+ edit /etc/swift/proxy-server.conf
+make sure that %...% at the end is replaced with swift user info
+
+ # service openstack-swift-proxy restart
+
+ swift stat
+
+ it should return something like
+
+ No handlers could be found for logger "keystoneclient.httpclient"
+       Account: AUTH_49d2290b1d9443c7a446aa7172c09717
+    Containers: 0
+       Objects: 0
+         Bytes: 0
+  Content-Type: text/plain; charset=utf-8
+   X-Timestamp: 1407104406.13646
+    X-Trans-Id: txe591549d059144cd91dce-0053deb596
+X-Put-Timestamp: 1407104406.13646
+
+
+some details here: http://docs.openstack.org/grizzly/openstack-object-storage/admin/content/verify-swift-installation.html
+
+Above command without environmental variables:
+
+swift -V 2.0 -A http://127.0.0.1:5000/v2.0 -U service:swift -K password stat
+
+now try to upload a file (test1.txt)
+
+# swift upload myfolder test1.txt
+# swift list
+# swift list myfolder
+

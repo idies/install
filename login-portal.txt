@@ -1,0 +1,23 @@
+login portal:
+
+install build tools and prerequisites
+
+# yum install nodejs npm -y
+$ npm install bower -g
+# npm install grunt -g
+# npm install grunt-cli -g
+# npm install grunt --save-dev
+# npm install
+
+clone from git:
+
+# git clone https://github.com/idies/login-portal.git -b develop
+
+compile code using grunt:
+
+# grunt built --force
+
+output will be in directory build, this needs to be copied to the web server:
+
+# cp -R build /var/www/html/login-portal
+

@@ -1,0 +1,57 @@
+
+Installing the dashboard
+
+# apt-get install apache2
+# apt-get install memcached libapache2-mod-wsgi openstack-dashboard
+
+# yum install httpd memcached mod_wsgi openstack-dashboard
+
+Apache might not be able to restart due to some config error in 
+
+/etc/apache2/conf-enabled/openstack-dashboard.conf
+
+Test config with:
+
+deb# apache2ctl -t
+sl# apachectl -t
+
+---- debian only
+Enable the problematic module with:
+
+# a2enmod wsgi
+
+remove buggy theme:
+
+# apt-get remove --purge openstack-dashboard-ubuntu-theme
+
+Now you should be able to access the dashboard
+
+If doesn't work, try
+
+# tail /var/log/apache2/error.log
+debian only -----
+
+---- on SL, d
+Modify the value of CACHES['default']['LOCATION'] in /etc/openstack-dashboard/local_settings to match the ones set in /etc/sysconfig/memcached.
+
+curl "http://localhost/dashboard"
+----
+
+Keystone entry to itself might be missing. In this case
+
+# keystone service-create --name keystone --type identity
+# keystone endpoint-create \
+--region RegionOne \
+--service-id=d1a68bb2aa1a41bcb15d147b40589fd1 \
+--publicurl=http://127.0.0.1:5000/v2.0 \
+--internalurl=http://127.0.0.1:5000/v2.0 \
+--adminurl=http://127.0.0.1:35357/v2.0
+
+# keystone service-create --name=nova --type=compute --description="Compute Service"
+# keystone endpoint-create \
+--region RegionOne \
+--service-id=5b18b935a5f443069470d43e961813b8 \
+--publicurl='http://127.0.0.1:8774/v2/%(tenant_id)s' \
+--internalurl='http://127.0.0.1:8774/v2/%(tenant_id)s' \
+--adminurl='http://127.0.0.1:8774/v2/%(tenant_id)s'
+
