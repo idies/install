@@ -61,8 +61,16 @@ Test with
 
 # curl "http://localhost"
 
+8. Install NTP
+
+# yum install ntp ntpdate ntp-doc -y
+# ntpdate pool.ntp.org
+# chkconfig ntpd on
+# /etc/init.d/ntpd start
+
 ** Links
 
 http://www.hyper-v-mart.com/Howto/Install_CentOS_5_VM_Step_by_Step.aspx
 http://www.linuxquestions.org/questions/linux-newbie-8/questions-regarding-centos-6-3-install-on-hyperv-remote-server-4175431528-print/
 http://www.microsoft.com/en-us/download/details.aspx?id=34603
+http://www.cyberciti.biz/faq/howto-install-ntp-to-synchronize-server-clock/
