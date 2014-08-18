@@ -1,4 +1,6 @@
-SciDrive installation
+SciDrive web service installation
+=================================
+
 
 # git clone https://github.com/idies/scidrive.git -b feature/keystone
 
@@ -67,6 +69,16 @@ Then deploy:
 
 It will be placed into /var/lib/tomcat6/webapps/
 
+Copy application.properties to /etc/vospace/
+
+
+
+
+
+SCIDRIVE-UI
+===========
+
+
 Clone the ui from github and initialize (tons of) submodules
 
 # git clone https://github.com/idies/scidrive-ui.git -b feature_auth
@@ -106,3 +118,15 @@ Add to the _begining_ of list:
 Then restart iptables
 
 # service iptables restart
+
+Replace openJDK with Oracle JDK:
+
+- download rpm from Oracle
+- yum install ...rpm
+
+# alternatives --install /usr/bin/java java /usr/java/jdk1.7.0_67/jre/bin/java 200000
+# alternatives --install /usr/bin/javaws javaws /usr/java/jdk1.7.0_67/jre/bin/javaws 200000
+ 
+# service tomcat6 restart
+
+http://www.if-not-true-then-false.com/2010/install-sun-oracle-java-jdk-jre-7-on-fedora-centos-red-hat-rhel/
