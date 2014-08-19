@@ -1,0 +1,23 @@
+RabbitMQ installation
+=====================
+
+# yum install rabbitmq-server
+
+Create config file /etc/rabbitmq/rabbitmq.config, add following:
+
+[
+        {rabbit, [{tcp_listeners, [{"0.0.0.0", 5672}]}]}
+]
+
+# chkconfig rabbitmq-server on
+# service start rabbitmq-server
+
+Test if listening on all interfaces:
+
+# netstat -ln | grep 5672
+
+Open port on public interface if necessary:
+
+Edit /etc/sysconfig/iptables and add line
+
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 5672 -j ACCEPT
