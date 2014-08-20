@@ -2,8 +2,8 @@ Install openstack from repo
 
 1. Add repo to yum:
 
-# cd /etc/yum.repos.d/
-# wget "https://repos.fedorapeople.org/repos/openstack/openstack-havana/epel-openstack-havana.repo"
+# yum install yum-plugin-priorities
+# yum install http://repos.fedorapeople.org/repos/openstack/openstack-icehouse/rdo-release-icehouse-4.noarch.rpm
 
 # cd ~
 # yum update
