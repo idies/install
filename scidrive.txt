@@ -157,3 +157,46 @@ This file has to be copied manually to a location defined by absolute path in sc
 
 * scidrive-ui/src/scidrive/resources/regions	-- configure regions
 * scidrive-ui/src/auth/SciServerLogin.js	-- configure login portal url
+
+
+Keystone preconfiguration to work with skydrive
+===============================================
+
+Keystone tokens should contain endpoints. For this purporse, users must be associated with a project/token and added to a role.
+
+We assume test user already exists
+
+Create a generic role for users:
+
+# keystone role-create  --name StandardUser
+
+Create a tenant (will need to do it for each user)
+
+# keystone tenant-create --name test
+
+Add user to the role
+
+# keystone user-role-add --user test --role StandardUser --tenant test
+
+Verify it by authenticating the user and examining the returned token:
+
+curl -X POST "http://172.23.24.32:35357/v2.0/tokens" \
+ -H "X-Auth-Token: d2e63a200f9dd4ba99e9" \
+ -H "Content-Type: application/json" \
+ -d '{
+   "auth":{
+      "tenantName":"test",
+      "passwordCredentials":{
+         "username":"test",
+         "password":"alma"
+      }
+   }
+}'
+
+It should contain the endpoints.
+
+Once a token is created, verify it's scoped within the project:
+
+curl -H "X-Auth-Token: d2e63a200f9dd4ba99e9" \
+-H "X-Subject-Token: 8df23fc6536840afada893985d5b54a9" \
+"http://172.23.24.32:35357/v3/auth/tokens"
