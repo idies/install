@@ -130,3 +130,30 @@ Replace openJDK with Oracle JDK:
 # service tomcat6 restart
 
 http://www.if-not-true-then-false.com/2010/install-sun-oracle-java-jdk-jre-7-on-fedora-centos-red-hat-rhel/
+
+
+Configuring scidrive
+====================
+
+* scidrive/src/application.properties
+
+# linux services
+storage.url = http://172.23.24.32:8081/auth/v1.0
+keystone.url = http://172.23.24.32:35357
+# Database
+db.login = scidrive
+db.password = password
+db.driver = com.mysql.jdbc.Driver
+db.url = jdbc:mysql://172.23.24.32/scidrive?autoReconnect=true&characterEncoding=utf8&useUnicode=true
+# RabbitMQ vhost & host
+rabbitmq.vhost = /
+rabbitmq.host = 172.23.24.32
+# swift
+service.tenant = service
+service.user = swift
+service.password = almafa
+
+This file has to be copied manually to a location defined by absolute path in scridrive/src/settings.xml
+
+* scidrive-ui/src/scidrive/resources/regions	-- configure regions
+* scidrive-ui/src/auth/SciServerLogin.js	-- configure login portal url
