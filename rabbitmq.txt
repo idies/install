@@ -1,7 +1,12 @@
 RabbitMQ installation
 =====================
 
-# yum install rabbitmq-server
+To grab the lastest version, visit http://www.rabbitmq.com
+
+Install it from official rpm:
+
+# rpm --import http://www.rabbitmq.com/rabbitmq-signing-key-public.asc
+# yum install rabbitmq-server-3.3.5-1.noarch.rpm
 
 Create config file /etc/rabbitmq/rabbitmq.config, add following:
 
