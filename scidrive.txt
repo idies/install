@@ -8,7 +8,7 @@ SciDrive web service installation
 
 mysql> CREATE DATABASE scidrive;
 mysql> USE scidrive;
-mysql> SOURCE sql/vospace.sql;
+mysql> SOURCE sql/vospace.sql;	-- or use file with latest version number...
 mysql> GRANT ALL ON scidrive.* TO 'scidrive'@'%' IDENTIFIED BY 'almafa';
 mysql> GRANT ALL ON scidrive.* TO 'scidrive'@'localhost' IDENTIFIED BY 'almafa';
 
@@ -21,10 +21,6 @@ Make changes to the scidrive/src/application.properties file
 	- change region
 	- mysql user and password
 	
----> fishy
-Generate a pool of SWIFT users using the scidrive/sql/generate_swift_users.pl script
-	- before running, modify: database, user, pw, swift url
-<---
 
 Intalling:
 
