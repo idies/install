@@ -19,11 +19,9 @@ Newer versions of the message queue server is available from http://www.rabbitmq
 # keystone role-create --name=admin
 # keystone user-role-add --user=swift --tenant=service --role=admin
 
-Make sure, and this is very important, that thw swift account is associated with the same tenant as users:
+Graywulf uses the 'user' role as the default role for every user.
 
-# keystone user-role-add --user swift --tenant StandardUser --role admin
-
-Also, when configuring the vospace service, this tenant will need to be used. Graywulf uses the StandardUser role as the default role for every user.
+# keystone role-create --name user
 
 Create a service entry for the Object Storage Service:
 
