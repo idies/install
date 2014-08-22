@@ -61,6 +61,8 @@ check if created
 
 7. Register service in keystone
 
+# keystone service-create --name keystone --type identity
+
 # keystone endpoint-create --service keystone \
 --publicurl=http://172.23.24.32:5000/v2.0 \
 --internalurl=http://172.23.24.32:5000/v2.0 \
