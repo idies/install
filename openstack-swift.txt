@@ -14,6 +14,12 @@ Qpid and ZeroMQ (0MQ) are also available.
 # keystone role-create --name=admin
 # keystone user-role-add --user=swift --tenant=service --role=admin
 
+Make sure, and this is very important, that thw swift account is associated with the same tenant as users:
+
+# keystone user-role-add --user swift --tenant StandardUser --role admin
+
+Also, when configuring the vospace service, this tenant will need to be used.
+
 Create a service entry for the Object Storage Service:
 
 # keystone service-create --name=swift --type=object-store --description="Object Storage Service"
@@ -22,7 +28,10 @@ this will return service id to be used below
 
 Create the endpoint. Port should be that of the proxy server (8081)
 
-# keystone endpoint-create --service=swift --publicurl='http://172.23.24.32:8081/v1/AUTH_%(tenant_id)s' --internalurl='http://172.23.24.32:8081/v1/AUTH_%(tenant_id)s' --adminurl=http://172.23.24.32:8081
+# keystone endpoint-create --service=swift \
+--publicurl='http://172.23.24.32:8081/v1/AUTH_%(tenant_id)s' \
+--internalurl='http://172.23.24.32:8081/v1/AUTH_%(tenant_id)s' \
+--adminurl=http://172.23.24.32:8081
 
 Test settings:
 
