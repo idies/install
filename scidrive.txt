@@ -168,15 +168,16 @@ We assume test user already exists
 
 Create a generic role for users:
 
-# keystone role-create  --name StandardUser
+# keystone role-create  --name user
 
 Create a tenant (will need to do it for each user)
 
+# keystone user-create --name test --pass password
 # keystone tenant-create --name test
 
 Add user to the role
 
-# keystone user-role-add --user test --role StandardUser --tenant test
+# keystone user-role-add --user test --role user --tenant test
 
 Verify it by authenticating the user and examining the returned token:
 
@@ -188,7 +189,7 @@ curl -X POST "http://172.23.24.32:35357/v2.0/tokens" \
       "tenantName":"test",
       "passwordCredentials":{
          "username":"test",
-         "password":"alma"
+         "password":"password"
       }
    }
 }'
@@ -200,3 +201,23 @@ Once a token is created, verify it's scoped within the project:
 curl -H "X-Auth-Token: d2e63a200f9dd4ba99e9" \
 -H "X-Subject-Token: 8df23fc6536840afada893985d5b54a9" \
 "http://172.23.24.32:35357/v3/auth/tokens"
+
+Here are the important sections from proxy-server.conf
+
+[filter:keystone]
+use = egg:swift#keystoneauth
+operator_roles = user
+reseller_admin_role = admin
+#is_admin = true
+cache = swift.cache
+
+[filter:authtoken]
+paste.filter_factory = keystoneclient.middleware.auth_token:filter_factory
+admin_tenant_name = service
+admin_user = swift
+admin_password = password
+auth_host = 172.23.24.32
+auth_port = 35357
+auth_protocol = http
+auth_uri = http://172.23.24.32:5000/
+signing_dir = /tmp/keystone-signing-swift
