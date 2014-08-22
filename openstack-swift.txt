@@ -1,3 +1,6 @@
+Installing OpenStack Swift with Keystone authentication
+=======================================================
+
 1. Install RabbitMQ
 
 On the controller node, install the messaging queue server. Typically this is RabbitMQ but
@@ -6,6 +9,8 @@ Qpid and ZeroMQ (0MQ) are also available.
 # yum install rabbitmq-server -y
 # chkconfig rabbitmq-server on
 # service rabbitmq-server start
+
+Newer versions of the message queue server is available from http://www.rabbitmq.com/ as an RPM package.
 
 2. Create account for swift in Keystone
 
@@ -18,7 +23,7 @@ Make sure, and this is very important, that thw swift account is associated with
 
 # keystone user-role-add --user swift --tenant StandardUser --role admin
 
-Also, when configuring the vospace service, this tenant will need to be used.
+Also, when configuring the vospace service, this tenant will need to be used. Graywulf uses the StandardUser role as the default role for every user.
 
 Create a service entry for the Object Storage Service:
 
