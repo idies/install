@@ -8,13 +8,17 @@ Install it from official rpm:
 # rpm --import http://www.rabbitmq.com/rabbitmq-signing-key-public.asc
 # yum install rabbitmq-server-3.3.5-1.noarch.rpm
 
-The new version of rabbitMQ accepts guest connections from localhost only
+The new version of rabbitMQ accepts guest connections from localhost only, but specifying the server as localhost doesn't really work. To enable specifying the server in configs by hostname or IP, enable remote guest access.
 
 Create config file /etc/rabbitmq/rabbitmq.config, add following:
 
-[
-        {rabbit, [{tcp_listeners, [{"0.0.0.0", 5672}]}]}
-]
+  [
+        {rabbit, [
+                {tcp_listeners, [{"0.0.0.0", 5672}]},
+                {loopback_users, [] }
+        ]}
+  ].
+
 
 # chkconfig rabbitmq-server on
 # service start rabbitmq-server
@@ -28,3 +32,9 @@ Open port on public interface if necessary:
 Edit /etc/sysconfig/iptables and add line
 
 -A INPUT -m state --state NEW -m tcp -p tcp --dport 5672 -j ACCEPT
+
+To enable web-based management:
+
+# rabbitmq-plugins enable rabbitmq_management
+
+Don't forget to restart rabbitmq-server service
