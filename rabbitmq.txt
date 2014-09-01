@@ -22,7 +22,7 @@ Create config file /etc/rabbitmq/rabbitmq.config, add following:
 
 
 # chkconfig rabbitmq-server on
-# service start rabbitmq-server
+# service rabbitmq-server start
 
 Test if listening on all interfaces:
 
