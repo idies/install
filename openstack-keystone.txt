@@ -1,7 +1,11 @@
 Install openstack from repo
 
-1. Add repo to yum:
+1. Add EPEL and OpenStack repos to yum:
 
+# cd ~
+# wget http://epel.mirror.net.in/epel/6/i386/epel-release-6-8.noarch.rpm
+# rpm -Uvh epel-release-6-8.noarch.rpm
+# yum update
 # yum install yum-plugin-priorities
 # yum install http://repos.fedorapeople.org/repos/openstack/openstack-icehouse/rdo-release-icehouse-4.noarch.rpm
 
