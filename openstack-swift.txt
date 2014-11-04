@@ -188,6 +188,15 @@ use = egg:swift#catch_errors
 [filter:healthcheck]
 use = egg:swift#healthcheck
 
+The correct keystone settings to work with scidrive:
+[filter:keystone]
+use = egg:swift#keystoneauth
+operator_roles = user
+reseller_admin_role = admin
+#is_admin = true
+cache = swift.cache
+
+
 Turns out swift-ring-bulder was missing, but a fix:
 # apt-get install swift
 
