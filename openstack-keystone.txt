@@ -33,6 +33,7 @@ Generate a random admin key:
 edit /etc/keystone/keystone.conf
   admin_token = d2e63a200f9dd4ba99e9
   connection = mysql://keystone:password@localhost/keystone
+  provider="keystone.token.providers.uuid.Provider"
 
 4. Create rc file for OpenStack authentication: /root/admin-openrc.sh
 
