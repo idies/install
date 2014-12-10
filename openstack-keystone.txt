@@ -73,3 +73,20 @@ check if created
 --internalurl=http://172.23.24.32:5000/v2.0 \
 --adminurl=http://172.23.24.32:35357/v2.0
 
+At the end of the install, the following roles, tenants and users must exist. Also see swift install for details:
+
+roles:
+
+_member_
+admin
+user
+
+tenants:
+
+admin
+service
+
+users:
+
+admin
+swift
