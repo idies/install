@@ -90,3 +90,9 @@ users:
 
 admin
 swift
+
+tenant-user roles: (to be created with user-role-add)
+admin:admin -> admin
+service:swift -> admin
+
+all other users should have a tenant associated with them (same name as user's name) and be in the user role.
